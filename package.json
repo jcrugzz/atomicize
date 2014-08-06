@@ -1,6 +1,6 @@
 {
   "name": "atomicize",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "simple module used to create an atomic set of jobs using a leveldb/levelup instance",
   "main": "index.js",
   "scripts": {
