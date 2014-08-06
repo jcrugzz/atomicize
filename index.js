@@ -1,9 +1,13 @@
 
 var EE = require('events').EventEmitter;
+var util = require('util');
 var trigger = require('level-trigger');
+var levelup = require('levelup');
 var batch = require('level-create-batch');
 
 module.exports = Atomicize;
+
+util.inherits(Atomicize, EE);
 
 //
 // We are just wrapping level-trigger for now and making it more atomic as we
@@ -13,13 +17,14 @@ module.exports = Atomicize;
 function Atomicize(options, fn) {
   if (!(this instanceof Atomicize)) return new Atomicize(options, fn);
   options = options || {};
+  EE.call(this);
 
-  // actual level database
-  this.db = options instanceof levelup
+  // actual level database (TODO: have better check here);
+  this.db = typeof options.get == 'function'
     ? options
     : options.db;
 
-  if (!this.db) throw new Error('Must pass in database');
+  if (!this.db) throw new Error('Must pass in a levelup like database');
 
   this.fn = fn;
   this.name = options.name || 'jobs'
@@ -36,7 +41,7 @@ function Atomicize(options, fn) {
 // condition
 Atomicize.prototype.queue = function (data, fn) {
   // assumes data contains a key and a value
-  if (!data.key || !data.value)
+  if (!data || !data.key || !data.value)
     return process.nextTick(function () {
       fn(new Error('Malformed data'));
     });
