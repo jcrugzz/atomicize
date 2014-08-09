@@ -25,7 +25,6 @@
   "homepage": "https://github.com/jcrugzz/atmocize",
   "dependencies": {
     "level-create-batch": "~1.0.1",
-    "level-trigger": "git://github.com/jcrugzz/level-trigger#job-done",
-    "levelup": "~0.18.6"
+    "level-trigger": "git://github.com/jcrugzz/level-trigger#job-done"
   }
 }
