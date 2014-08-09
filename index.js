@@ -2,7 +2,6 @@
 var EE = require('events').EventEmitter;
 var util = require('util');
 var trigger = require('level-trigger');
-var levelup = require('levelup');
 var batch = require('level-create-batch');
 
 module.exports = Atomicize;
@@ -31,7 +30,7 @@ function Atomicize(options, fn) {
   this.trigger = trigger(this.db, this.name, this.fn);
 
   this.trigger.on('complete', this.emit.bind(this, 'complete'));
-  this.trigger.on('done', this._onDone.bind(this));
+  this.trigger.on('done', this.invalidate.bind(this));
   // Object of job keys being processed
   this.processing = {};
 }
@@ -52,14 +51,20 @@ Atomicize.prototype.queue = function (data, fn) {
     });
 
   this.processing[data.key] = true;
-  batch(this.trigger, [data], fn);
+  batch(this.trigger, [data], this._onBatch.bind(this, fn, data));
 };
 
-Atomicize.prototype._onDone = function (data) {
-  var error = new Error('wtf there is a problem');
-  error.body = data;
-  if(!this.processing[data.key])
-    return this.emit('error', error);
+Atomicize.prototype._onBatch = function (fn, data, err) {
+  if (err) {
+    this.invalidate(data);
+    return fn(err);
+  }
+  this.emit('queued');
+};
 
-  delete this.processing[data.key];
+// Invalidate that a current key is being processed when finished or errors
+Atomicize.prototype.invalidate = function (data) {
+  var key = typeof data === 'string' ? data : data && data.key;
+  if (key && this.processing[key]) delete this.processing[key];
+  return this;
 };
