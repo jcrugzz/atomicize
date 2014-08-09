@@ -59,12 +59,13 @@ Atomicize.prototype._onBatch = function (fn, data, err) {
     this.invalidate(data);
     return fn(err);
   }
-  this.emit('queued');
+  this.emit('queued', data);
 };
 
 // Invalidate that a current key is being processed when finished or errors
 Atomicize.prototype.invalidate = function (data) {
   var key = typeof data === 'string' ? data : data && data.key;
   if (key && this.processing[key]) delete this.processing[key];
+  this.emit('done', data);
   return this;
 };
